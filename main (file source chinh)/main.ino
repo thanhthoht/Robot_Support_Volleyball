@@ -1,23 +1,27 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
-#define TRIG_PIN 2
-#define ECHO_PIN 12
+#define TRIG_PIN 7
+#define ECHO_PIN 8
 #define TIME_OUT 5000
 #define SETPOINT 20
 #define OFFSET 8
-
+#define in1 12
+#define in2 13
+#define in3 14
+#define in4 15
 
 LiquidCrystal_I2C lcd(0x3F,44,2);
+
 void setup()
 {
-	pinMode(12,OUTPUT);
-	pinMode(13,OUTPUT);
-	pinMode(14,OUTPUT);
-	pinMode(15,OUTPUT);
-	pinMode(7, OUTPUT);
-  	pinMode(8, INPUT);
-  	Serial.begin(9600);
+	pinMode(in1,OUTPUT);  
+	pinMode(in2,OUTPUT);  
+	pinMode(in3,OUTPUT);
+	pinMode(in4,OUTPUT);
+	pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  Serial.begin(9600);
 	
 }
 void HienLcd(int speed){
@@ -57,11 +61,11 @@ float get_distance()
 }
 
 //hàm điều khiển motor tiến
-void motortien(int in1,int in2,int in3,int in4,int speed){
-	digitalWrite(in1, HIGH);
-	analogWrite(in2, 255-speed);
-	digitalWrite(in3,HIGH);
-	analogWrite(in4, 255-speed);
+void motortien(int a1,int a2,int a3,int a4,int speed){
+	digitalWrite(a1, HIGH);
+	analogWrite(a2, 255-speed);
+	digitalWrite(a3,HIGH);
+	analogWrite(a4, 255-speed);
 }
 
 //Hàm PID
@@ -94,6 +98,6 @@ void PID(float et)
 void loop()
 {                 
 	int speed=150;
-  	motortien(12,13,14,15,speed);
+  	motortien(in1,in2,in3,in4,speed);
   	HienLcd(speed);
 }
