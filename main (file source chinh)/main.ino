@@ -10,11 +10,20 @@
 #define in2 13
 #define in3 14
 #define in4 15
+#define en1 18
+#define en2 19
+#define en3 16
+#define en4 17
 
+int valor;
+long iii=0;
+int SA=5;
+int speed;
 LiquidCrystal_I2C lcd(0x3F,44,2);
 
 void setup()
 {
+  speed=150;
 	pinMode(in1,OUTPUT);  
 	pinMode(in2,OUTPUT);  
 	pinMode(in3,OUTPUT);
@@ -22,19 +31,29 @@ void setup()
 	pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
   Serial.begin(9600);
-	
+	pinMode(en3,INPUT);
+  pinMode(en4,INPUT);
 }
+
+
+
+// Hàm hiện LCD
 void HienLcd(int speed){
-	lcd.begin();
-	lcd.backlight();
+	 lcd.begin();
+	 lcd.backlight();
   	for(int i=0;i<10;i++){
   		lcd.print(speed);
   		lcd.print("m/s");
-  		delay(100);
+      lcd.setCursor(0,1);
+      lcd.print(analogRead(en3));
+      lcd.setCursor(0,2);
+      lcd.print(analogRead(en4));
+      delay(1000);
   		lcd.clear();
-  		delay(5);
+  		delay(10);
   	}
 }
+
 //cảm biến siêu âm đo khoảng cách
 float prev_distanceCm = 0;
 float get_distance()
@@ -97,7 +116,7 @@ void PID(float et)
 
 void loop()
 {                 
-	int speed=150;
   	motortien(in1,in2,in3,in4,speed);
   	HienLcd(speed);
+
 }
