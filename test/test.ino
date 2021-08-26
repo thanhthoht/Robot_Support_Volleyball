@@ -1,11 +1,16 @@
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+LiquidCrystal_I2C lcd(0x3F,44,2);
 
+#define motor3 7
+#define motor4 8
+#define motor1 13
+#define motor2 12
+#define en1 11
+#define en2 9
+#define TRIG 20
+#define ECHO 21
 
-#define in1 12
-#define in2 13
-#define enA 8
-#define in3 14
-#define in4 15
-#define enB 7
 int encoder_L=5;
 int encoder_R=3;
 
@@ -16,12 +21,13 @@ int rpm_2;
 
 void setup()
 {
-	pinMode(in1,OUTPUT);
-	pinMode(in2,OUTPUT);
-	pinMode(enA,OUTPUT);
-	pinMode(in3,OUTPUT);
-	pinMode(in4,OUTPUT);
-	pinMode(enB,OUTPUT);
+	Serial.begin(9600);
+	pinMode(motor1,OUTPUT);
+	pinMode(motor2,OUTPUT);
+	pinMode(motor3,OUTPUT);
+	pinMode(motor4,OUTPUT);
+	pinMode(en1,OUTPUT);
+	pinMode(en2,OUTPUT);
 
 	//encoder trái
 	pinMode(encoder_L,INPUT);
@@ -32,6 +38,7 @@ void setup()
 		digitalWrite(encoder_R, HIGH);
  		attachInterrupt(1, countpulse_2, RISING);
 
+ 	lcd.begin();
 }
 
 void countpulse_1(){
@@ -40,64 +47,73 @@ void countpulse_1(){
 void countpulse_2(){
         counter_2++;
 }
-double encoder_1(){
-  static uint32_t previousMillis;
-  if (millis() - previousMillis >= 1000) {
-            rpm_1 = (counter_1/20)*60;          
-            counter_1 = 0;
-            previousMillis += 1000;
-  }
-  return rpm_1;
-}
 
-double encoder_2(){
-  static uint32_t previousMillis;
-  if (millis() - previousMillis >= 1000) {
-            rpm_2 = (counter_2/20)*60;          
-            counter_2 = 0;
-            previousMillis += 1000;
-  }
-  return rpm_2;
-}
-
-void Motor_1(int v){
+void motor_up(int in1,int in2,int en,int speed){
 	digitalWrite(in1,HIGH);
 	digitalWrite(in2,LOW);
-	analogWrite(enA,v);
+	analogWrite(en,speed);
 }
-void Motor_2(int v){
-	digitalWrite(in3,HIGH);
-	digitalWrite(in4,LOW);
-	analogWrite(enB,v);
+void motor_down(int in1,int in2,int en,int speed){
+	digitalWrite(in1,LOW);
+	digitalWrite(in2,HIGH);
+	analogWrite(en,speed);
 }
 
 //												Tính RPM (số vòng quay)
 
 //												Thiết lập bộ điều khiển PID
-double Kp = 100;
-double Ki = 2;
-double Kd = 3;
-double dt = 0.01;
-double sum_err=0;
-double prev_et=0;
-double PID_Motor(double error)
+float rKp = 1;
+float rKi = 0.5;
+float rKd = 0.05;
+float rdt = 10;
+float rsum_err=0;
+float rprev_et=0;
+float Right_PID_Motor(float rerror)
 {
-  sum_err += error * dt;
-  double P = Kp * error;
-  double I = Ki * sum_err;
-  double D = Kd * (error - prev_et)/dt;
-
-  double ut = P + I + D;
+  rsum_err += rerror * rdt;
+  float P = rKp * rerror;
+  float I = rKi * rsum_err;
+  float D = rKd * (rerror - rprev_et)/rdt;
+  float ut = P + I + D;
   return ut;
 }
-//
-//
-//
 
+float lKp = 1;
+float lKi = 0.5;
+float lKd = 0.05;
+float ldt = 10;
+float lsum_err=0;
+float lprev_et=0;
+float Left_PID_Motor(float lerror)
+{
+  lsum_err += lerror * ldt;
+  float P = lKp * lerror;
+  float I = lKi * lsum_err;
+  float D = lKd * (lerror - lprev_et)/ldt;
+  float ut = P + I + D;
+  return ut;
+}
 
+int control_Motor_By_PID_up(float rerror,float lerror){
+  float velocity1=104+Right_PID_Motor(rerror);  
+  float velocity2=104+Left_PID_Motor(lerror);  
+  // vận tốc gốc để Motor encoder quay trong proteus là 104
+  motor_up(motor1,motor2,en1,200);                                  
+  motor_up(motor3,motor4,en2,velocity1);
+
+}
+
+float setpoint_Distance_1=100;
+float rerror,lerror;
 void loop()
 {
-	 Motor_1(170);
-	 Motor_2(170);
+	while(counter_1<=100&&counter_2<=100){
+		lcd.print(counter_1);
+		lcd.setCursor(0,1);
+		lcd.print(counter_2);
+		rerror=setpoint_Distance_1-counter_1;
+		lerror=setpoint_Distance_1-counter_2;
+		control_Motor_By_PID_up(rerror,lerror);
+	}
 }
 
