@@ -2,24 +2,44 @@
 
 #include <LiquidCrystal_I2C.h>
 
-#define motor3 7
-#define motor4 8
+
+// Chân 2 motor sau
 #define motor1 13
 #define motor2 12
+#define motor3 7
+#define motor4 8
+
 #define en1 11
 #define en2 9
-#define TRIG 20
-#define ECHO 21
+//Chân 2 motor trước
+#define motor5 52
+#define motor5 51
+#define motor5 50
+#define motor5 49
+#define en3 53
+#define en4 48
+
+// Chân cảm biến siêu âm
+#define TRIG_1 23
+#define ECHO_1 24
+#define TRIG_2 25
+#define ECHO_2 26
+
 #define TIME_OUT 5000
 
-int SA=5;
-int SB=4;
-long counter_1=0;
-long c2=0;
-int M1=HIGH,M2=LOW;
+// Chân encoder
+#define SA 5
+#define SB 4
+
+// động cơ Servo
 Servo ServoPen;
 Servo ServoClean1;
 Servo ServoClean2;
+
+
+long counter_1=0;
+long c2=0;
+int M1=HIGH,M2=LOW;
 long previousTimes = millis();
 int gocquay;
 LiquidCrystal_I2C lcd(0x3F,44,2);
@@ -37,8 +57,8 @@ void setup()
   pinMode(motor4,OUTPUT);
   pinMode(en1,OUTPUT);
   pinMode(en2,OUTPUT);
-  pinMode(TRIG,OUTPUT);
-  pinMode(ECHO,INPUT);
+  pinMode(TRIG_1,OUTPUT);
+  pinMode(ECHO_2,INPUT);
   ServoPen.attach(10);
   ServoClean1.attach(51);
   ServoClean2.attach(53);
@@ -66,7 +86,7 @@ void readEncoder_R(){
     c2--;
   }
 }
-//                            Tính số vòng quay của bánh
+//                            Đếm số vòng quay của bánh => quãng đường đi
 //                            Đây là bài toán trên thực tế nên không đưa vào proteus
 /*
 float encoder_1(){
@@ -211,13 +231,13 @@ float get_distance()
 {
   long duration;
   float distanceCm;
-  digitalWrite(TRIG, LOW);
+  digitalWrite(TRIG_1, LOW);
   delayMicroseconds(2);
-  digitalWrite(TRIG, HIGH);
+  digitalWrite(TRIG_1, HIGH);
   delayMicroseconds(10);
-  digitalWrite(TRIG, LOW);
+  digitalWrite(TRIG_1, LOW);
   
-  duration = pulseIn(ECHO, HIGH, TIME_OUT);
+  duration = pulseIn(ECHO_1, HIGH, TIME_OUT);
  
   // convert to distance
   distanceCm = (float)duration / 29.1 / 2;
@@ -251,7 +271,6 @@ const int historyLength = 10;
 float history[historyLength];
 int historyIndex=0;
 
-
 int getStableValue() {
   long sum = 0;
   for (int l = 0; l < historyLength; l++) {
@@ -260,13 +279,12 @@ int getStableValue() {
   return sum / historyLength;
 }
 
-
 void loop()
 {
   while(counter_1<=100){
     error1=setpoint_Distance_1-counter_1;
     int l=control_Motor_By_PID_up(error1);
-    
+
     lcd.setCursor(0,0);
     lcd.print(counter_1);
     lcd.setCursor(0,1);
